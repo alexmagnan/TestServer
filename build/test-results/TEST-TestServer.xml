@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="TestServer" tests="6" skipped="0" failures="0" errors="0" timestamp="2015-10-21T14:56:27" hostname="imac-P322-11.local" time="99.714">
+  <properties/>
+  <testcase name="testDefectToJson" classname="TestServer" time="0.576"/>
+  <testcase name="testConnection" classname="TestServer" time="0.247"/>
+  <testcase name="testUserFromJson" classname="TestServer" time="98.735"/>
+  <testcase name="testReadUser" classname="TestServer" time="0.035"/>
+  <testcase name="testUserToJson" classname="TestServer" time="0.041"/>
+  <testcase name="testDefectFromJson" classname="TestServer" time="0.027"/>
+  <system-out><![CDATA[{ "created" : "2015-10-21 10:56:27" , "status": "CREATED" , "createdBy": "http://localhost:9999/user/82" , "severity": "TRIVIAL" , "summary": "Unfortunately, Notes has Stopped..."}
+hello
+{ "name" : "foo" , "userType": "DEVELOPER"}
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
