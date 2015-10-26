@@ -17,7 +17,7 @@ public class User {
      * @param root
      * @return Created users
      */
-    public static List<User> fromJson(JSONArray root) {
+    public static List<User> fromJson(JSONArray root) throws IOException {
         List<User> users = new ArrayList<>();
         for(int i = 0; i < root.length(); i++)
             users.add(fromJson(root.getJSONObject(i)));
@@ -29,11 +29,20 @@ public class User {
      * @param root
      * @return
      */
-    public static User fromJson(JSONObject root)  {
+    public static User fromJson(JSONObject root) throws IOException {
         User user = new User();
-        user.setName(root.getString("name"));
-        user.setImageUrl(root.getString("imageUrl"));
-        user.setUserType(UserType.valueOf(root.getString("userType")));
+        // --- GET THE REQUIRED FIELDS --- //
+        String name = root.getString("name");
+        UserType type= UserType.valueOf(root.getString("userType"));
+        if(name == null || type == null) throw new IOException("Missing required fields for JSON user");
+        user.setName(name).setUserType(type);
+        // ------------------------------- //
+
+        // --- GET THE OPTIONAL FIELDS --- //
+        if(!root.isNull("imageUrl")){
+            user.setImageUrl(root.getString("imageUrl"));
+        };
+        // ------------------------------- //
 
         // extract the post resource URL from the "_links" object
         JSONObject links = root.getJSONObject("_links");
@@ -93,19 +102,20 @@ public class User {
      */
     public String toJson() throws IOException {
         StringBuilder sb = new StringBuilder();
-
-        if(name == null || userType == null){
-            throw new IOException("Missing required fields for JSON user");
-        }
+        // --- APPEND REQUIRED FIELDS --- //
+        if(name == null || userType == null) throw new IOException("Missing required fields for JSON user");
         sb.append("{ \"name\" : \"");
         sb.append(name);
         sb.append("\" , \"userType\": \"");
         sb.append(userType);
+        // ------------------------------ //
 
+        // --- APPEND OPTIONAL FIELDS --- //
         if(imageUrl != null){
             sb.append("\" , \"imageUrl\": \"");
             sb.append(imageUrl);
         }
+        // ------------------------------ //
 
         sb.append("\"}");
         return sb.toString();

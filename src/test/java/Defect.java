@@ -14,7 +14,7 @@ import java.util.*;
 public class Defect {
 
 
-    private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
     /**
@@ -22,7 +22,7 @@ public class Defect {
      * @param root
      * @return Created users
      */
-    public static List<Defect> fromJson(JSONArray root) throws ParseException {
+    public static List<Defect> fromJson(JSONArray root) throws ParseException, IOException {
         List<Defect> defects = new ArrayList<>();
         for(int i = 0; i < root.length(); i++)
             defects.add(fromJson(root.getJSONObject(i)));
@@ -34,15 +34,36 @@ public class Defect {
      * @param root
      * @return Created defect
      */
-    public static Defect fromJson(JSONObject root) throws ParseException {
+    public static Defect fromJson(JSONObject root) throws ParseException, IOException {
         Defect defect = new Defect();
-        defect.setCreated(new Date (root.getString("created")));
-        defect.setModified(new Date(root.getString("modified")));
-        defect.setSummary(root.getString("summary"));
-        defect.setStatus((Status) root.get("status"));
-        defect.setAssignedToUrl(root.getJSONObject("_links").getString("assignedToUrl"));
-        defect.setCreatedByUrl(root.getJSONObject("_links").getString("createdBy"));
-        defect.setSeverity((Severity) root.get("severity"));
+
+        //--- GET THE REQUIRED FIELDS --- //
+        String created = root.getString("created");
+        String status = root.getString("status");
+        String createdby = root.getJSONObject("_links").getJSONObject("createdBy").getString("href");
+
+        if(created == null || createdby == null || status == null){
+            throw new IOException("Missing required fields for JSON");
+        }
+        defect.setCreated(formatter.parse(created));
+        defect.setStatus(Status.valueOf(status));
+        defect.setCreatedByUrl(createdby);
+        // ------------------------------ //
+
+        // --- GET THE OPTIONAL FIELDS -- //
+        if(!root.isNull("modified")){
+            defect.setModified(formatter.parse(root.getString("modified")));
+        }
+        if(!root.isNull("summary")){
+            defect.setSummary(root.getString("summary"));
+        }
+        if(!root.getJSONObject("_links").getJSONObject("assignedTo").isNull("href")){
+            defect.setAssignedToUrl(root.getJSONObject("_links").getJSONObject("assignedTo").getString("href"));
+        }
+        if(!root.isNull("summary")){
+            defect.setSeverity(Severity.valueOf(root.getString("severity")));
+        }
+        // ------------------------------- //
 
         // extract the post resource URL from the "_links" object
         JSONObject links = root.getJSONObject("_links");
@@ -144,16 +165,20 @@ public class Defect {
      */
     public String toJson() throws IOException {
         StringBuilder sb = new StringBuilder();
+        //Make sure we have the required fields
         if( created ==null || createdByUrl == null || status == null){
             throw new IOException("Missing required fields for JSON");
         }
+        // --- APPEND THE REQUIRED FIELDS --- //
         sb.append("{ \"created\" : \"");
         sb.append(formatter.format(created));
         sb.append("\" , \"status\": \"");
         sb.append(status);
         sb.append("\" , \"createdBy\": \"");
         sb.append(createdByUrl);
+        // ---------------------------------- //
 
+        // --- APPEND THE OPTIONAL FIELDS --- //
         if(severity != null) {
             sb.append("\" , \"severity\": \"");
             sb.append(severity);
@@ -169,13 +194,15 @@ public class Defect {
             sb.append(formatter.format(modified));
         }
         if(assignedToUrl != null){
-            sb.append("\" , \"assignedToUrl\": \"");
+            sb.append("\" , \"assignedTo\": \"");
             sb.append(assignedToUrl);
         }
+        // --------------------------------- //
         sb.append("\"}");
-        sb=sb;
         return sb.toString();
-    }
+
+
+}
 
     /* helper for .equals() */
     private static boolean nullOrEqual(Object o1, Object o2) {
